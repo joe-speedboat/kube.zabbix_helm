@@ -32,3 +32,8 @@ helm uninstall zabbix -n monitoring
 kubectl delete namespace monitoring
 ```
 
+## Install Backup
+```bash
+for y in zabbix-backup-pvc.yml zabbix-backup-cron.yml; do echo "install $y"; kubectl apply -f $y; done
+```
+
