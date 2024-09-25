@@ -5,7 +5,7 @@
 
 
 ## Setup Zabbix
-´´´bash
+```bash
 HOST=mon.domain.tld
 
 helm repo add zabbix-community https://zabbix-community.github.io/helm-zabbix
@@ -24,11 +24,11 @@ helm upgrade --install zabbix zabbix-community/zabbix  \
   --debug
 
 kubectl get pv
-´´´
+```
 
 ## Uninstal Zabbix
-´´´bash
+```bash
 helm uninstall zabbix -n monitoring
 kubectl delete namespace monitoring
-´´´
+```
 
