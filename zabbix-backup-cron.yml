@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pgsql-backup-cronjob
+spec:
+  schedule: "0 2 * * *"  # Läuft täglich um 2:00 Uhr
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: pgsql-backup
+            image: postgres:16
+            env:
+              - name: POSTGRES_USER
+                valueFrom:
+                  secretKeyRef:
+                    key: user
+                    name: zabbixdb-pguser-zabbix
+              - name: POSTGRES_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    name: zabbixdb-pguser-zabbix
+              - name: POSTGRES_DB
+                valueFrom:
+                  secretKeyRef:
+                    key: dbname
+                    name: zabbixdb-pguser-zabbix
+              - name: DB_SERVER_HOST
+                value: zabbix-postgresql
+              - name: DB_SERVER_PORT
+                value: "5432"
+            volumeMounts:
+              - name: backup-storage
+                mountPath: /backups
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                # Anzahl der zu behaltenden Backups
+                KEEP_GEN=5
+                
+                # Backup erstellen und komprimieren
+                TIMESTAMP=$(date +"%Y%m%d%H%M")
+                PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h $DB_SERVER_HOST -p $DB_SERVER_PORT -U $POSTGRES_USER $POSTGRES_DB > /backups/backup-zabbix-${TIMESTAMP}.sql
+                
+                # Komprimiere das Backup
+                gzip /backups/backup-zabbix-${TIMESTAMP}.sql
+                
+                # Lösche alte Backups, behalte nur die letzten $KEEP_GEN
+                cd /backups
+                ls -1t | grep "backup-zabbix-.*\.sql\.gz" | tail -n +$((KEEP_GEN+1)) | xargs -r rm -fv
+          restartPolicy: OnFailure
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: pgsql-backup-pvc
+
