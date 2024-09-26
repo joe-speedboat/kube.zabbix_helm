@@ -6,6 +6,12 @@
 
 ## Setup Zabbix
 ```bash
+genpasswd() {
+   local l=$1
+   [ "$l" == "" ] && l=16
+   tr -dc A-Za-z0-9_=., < /dev/urandom | head -c ${l} | xargs 
+}
+
 HOST=mon.domain.tld
 
 helm repo add zabbix-community https://zabbix-community.github.io/helm-zabbix
@@ -19,6 +25,7 @@ helm upgrade --install zabbix zabbix-community/zabbix  \
   -n monitoring \
   --set postgresql.persistence.enabled=true \
   --set postgresql.persistence.storageSize=10Gi \
+  --set postgresAccess.password=$(genpasswd) \
   --set ingressRoute.enabled=true \
   --set ingressRoute.hostName=$HOST \
   --debug
@@ -34,6 +41,7 @@ kubectl delete namespace monitoring
 
 ## Install Backup
 ```bash
+kubectl config set-context --current --namespace=monitoring
 for y in zabbix-backup-pvc.yml zabbix-backup-cron.yml; do echo "install $y"; kubectl apply -f $y; done
 ```
 
