@@ -16,7 +16,7 @@ HOST=mon.domain.tld
 
 helm repo add zabbix-community https://zabbix-community.github.io/helm-zabbix
 helm search repo zabbix-community/zabbix -l
-export ZABBIX_CHART_VERSION='5.0.1'
+export ZABBIX_CHART_VERSION='5.0.2'
 
 helm upgrade --install zabbix zabbix-community/zabbix  \
   --dependency-update \
